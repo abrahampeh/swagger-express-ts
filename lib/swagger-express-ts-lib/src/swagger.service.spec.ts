@@ -174,7 +174,9 @@ describe("SwaggerService", () => {
           definition: {
             properties: {
               id: {
-                type: SwaggerDefinitionConstant.Model.Property.Type.STRING
+                description: 'Id of Version',
+                type: SwaggerDefinitionConstant.Model.Property.Type.STRING,
+                example: ['123456789'],
               } as ISwaggerDefinitionProperty
             }
           }
@@ -185,7 +187,13 @@ describe("SwaggerService", () => {
       expect(SwaggerService.getInstance().getData().definitions).to.deep.equal({
         Version: {
           properties: {
-            id: { type: "string" }
+            id: {
+              description: 'Id of Version',
+              example: ['123456789'],
+              type: 'string',
+              enum: undefined,
+              format: undefined,
+            },
           },
           required: [],
           type: "object"
