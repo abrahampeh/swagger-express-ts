@@ -8,7 +8,7 @@ Automatically generate and serve swagger.json v2.0.
 First, install [swagger-express-ts](https://www.npmjs.com/package/swagger-express-ts).
 
 ```sh
-npm install swagger-express-ts --save
+npm install @fiwoo/swagger-express-ts --save
 ```
 
 and [init tsconfig.json](./wiki/installation.md)

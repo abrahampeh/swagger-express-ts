@@ -60,11 +60,12 @@ export function ApiModelProperty(
             propertyType = args.itemType;
         } else {
             try {
-                propertyType = Reflect.getMetadata(
-                    'design:type',
-                    target,
-                    propertyKey
-                ).name;
+              const reflect = Reflect.getMetadata(
+                'design:type',
+                target,
+                propertyKey
+              );
+                propertyType = reflect && reflect.name ? reflect.name : propertyType;
             } catch (err) {
                 if (err.message === "Cannot read property 'name' of undefined") {
                     throw new Error(
@@ -74,7 +75,7 @@ export function ApiModelProperty(
                 }
             }
         }
-        
+
         SwaggerService.getInstance().addApiModelProperty(
             args,
             target,
