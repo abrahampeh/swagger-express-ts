@@ -1,4 +1,9 @@
 <a name="1.0.1"></a>
+# [1.0.10](2020-09-11)
+
+## Features
+
+- Inheritance ApiModelProperty
 
 # [1.0.1](2018-12-4)
 

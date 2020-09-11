@@ -12,6 +12,7 @@ import {
     IApiOperationArgsBaseParameter,
     IApiOperationArgsBaseResponse,
 } from './i-api-operation-args.base';
+import * as _ from "lodash";
 
 export interface ISwaggerBuildDefinitionModelPropertyType {
     type?: string | ISwaggerBuildDefinitionModelPropertyType;
@@ -165,49 +166,52 @@ export interface ISwaggerBuildDefinition {
 }
 
 export function build(buildDefinition: ISwaggerBuildDefinition): void {
-    assert.ok(buildDefinition, 'Definition are required.');
-    assert.ok(
-        buildDefinition.info,
-        'Informations are required. Base is { title: "Title of my API", version: "1.0.0"}'
+  assert.ok(buildDefinition, "Definition are required.");
+  assert.ok(
+    buildDefinition.info,
+    'Informations are required. Base is { title: "Title of my API", version: "1.0.0"}'
+  );
+  if (buildDefinition.basePath) {
+    SwaggerService.getInstance().setBasePath(buildDefinition.basePath);
+  }
+  if (buildDefinition.openapi) {
+    SwaggerService.getInstance().setOpenapi(buildDefinition.openapi);
+  }
+  if (buildDefinition.info) {
+    SwaggerService.getInstance().setInfo(buildDefinition.info);
+  }
+  if (buildDefinition.schemes) {
+    SwaggerService.getInstance().setSchemes(buildDefinition.schemes);
+  }
+  if (buildDefinition.produces) {
+    SwaggerService.getInstance().setProduces(buildDefinition.produces);
+  }
+  if (buildDefinition.consumes) {
+    SwaggerService.getInstance().setConsumes(buildDefinition.consumes);
+  }
+  if (buildDefinition.host) {
+    SwaggerService.getInstance().setHost(buildDefinition.host);
+  }
+  if (buildDefinition.externalDocs) {
+    SwaggerService.getInstance().setExternalDocs(buildDefinition.externalDocs);
+  }
+  if (buildDefinition.securityDefinitions) {
+    SwaggerService.getInstance().addSecurityDefinitions(
+      buildDefinition.securityDefinitions
     );
-    if (buildDefinition.basePath) {
-        SwaggerService.getInstance().setBasePath(buildDefinition.basePath);
-    }
-    if (buildDefinition.openapi) {
-        SwaggerService.getInstance().setOpenapi(buildDefinition.openapi);
-    }
-    if (buildDefinition.info) {
-        SwaggerService.getInstance().setInfo(buildDefinition.info);
-    }
-    if (buildDefinition.schemes) {
-        SwaggerService.getInstance().setSchemes(buildDefinition.schemes);
-    }
-    if (buildDefinition.produces) {
-        SwaggerService.getInstance().setProduces(buildDefinition.produces);
-    }
-    if (buildDefinition.consumes) {
-        SwaggerService.getInstance().setConsumes(buildDefinition.consumes);
-    }
-    if (buildDefinition.host) {
-        SwaggerService.getInstance().setHost(buildDefinition.host);
-    }
-    if (buildDefinition.externalDocs) {
-        SwaggerService.getInstance().setExternalDocs(
-            buildDefinition.externalDocs
-        );
-    }
-    if (buildDefinition.securityDefinitions) {
-        SwaggerService.getInstance().addSecurityDefinitions(
-            buildDefinition.securityDefinitions
-        );
-    }
-    if (buildDefinition.models) {
-        SwaggerService.getInstance().setDefinitions(buildDefinition.models);
-    }
-    if (buildDefinition.responses) {
-        SwaggerService.getInstance().setGlobalResponses(
-            buildDefinition.responses
-        );
-    }
-    SwaggerService.getInstance().buildSwagger();
+  }
+  if (buildDefinition.models) {
+    const models: any = {};
+    _.forOwn(buildDefinition.models, (value, key) => {
+      models[key] = {
+        name: key,
+        definition: value
+      };
+    });
+    SwaggerService.getInstance().setDefinitions(models);
+  }
+  if (buildDefinition.responses) {
+    SwaggerService.getInstance().setGlobalResponses(buildDefinition.responses);
+  }
+  SwaggerService.getInstance().buildSwagger();
 }
