@@ -64,7 +64,7 @@ export interface ISwaggerBuildDefinitionModelProperty {
     /**
      * Define example.
      */
-    example?: any[];
+    example?: any;
 }
 
 export interface ISwaggerBuildDefinitionModel {
