@@ -20,7 +20,7 @@ import * as _ from "lodash";
 import {
   IApiOperationArgsBaseParameter,
   IApiOperationArgsBase,
-  IApiOperationArgsBaseResponse
+  IApiOperationArgsBaseResponse, IOptions, IModelsubstition
 } from "./i-api-operation-args.base";
 import { IApiOperationGetArgs } from "./api-operation-get.decorator";
 import { IApiModelPropertyArgs } from "./api-model-property.decorator";
@@ -133,61 +133,79 @@ export class SwaggerService {
     for (const modelIndex in models) {
       const namedModel = models[modelIndex];
       const model = namedModel.definition;
-      const newDefinition: ISwaggerDefinition = {
-        type: SwaggerDefinitionConstant.Model.Type.OBJECT,
-        properties: {},
-        required: []
-      };
-      if (model.description) {
-        newDefinition.description = model.description;
-      }
-      for (const propertyIndex in model.properties) {
-        const property: ISwaggerBuildDefinitionModelProperty =
-          model.properties[propertyIndex];
-        const newProperty: ISwaggerDefinitionProperty = {
-          type: property.type
-        };
-        if (property.format) {
-          newProperty.format = property.format;
-        }
-
-        if (property.description) {
-          newProperty.description = property.description;
-        }
-
-        if (property.enum) {
-          newProperty.enum = property.enum;
-        }
-        if (property.example) {
-          newProperty.example = property.example;
-        }
-        if (property.itemType) {
-          newProperty.items = {
-            type: property.itemType
-          } as ISwaggerDefinitionPropertyItems;
-        }
-        if (property.model) {
-          if (
-            _.isEqual(
-              SwaggerDefinitionConstant.Model.Property.Type.ARRAY,
-              property.type
-            )
-          ) {
-            newProperty.items = {
-              $ref: this.buildRef(property.model)
-            } as ISwaggerDefinitionPropertyItems;
-          } else {
-            newProperty.$ref = this.buildRef(property.model);
-          }
-        }
-        if (property.required) {
-          newDefinition.required.push(propertyIndex);
-        }
-        newDefinition.properties[propertyIndex] = newProperty;
-      }
+      const newDefinition = this.buildDefinition(model);
       definitions[namedModel.name] = newDefinition;
     }
     this.data.definitions = _.mergeWith(this.data.definitions, definitions);
+  }
+
+  private buildDefinition(model: ISwaggerBuildDefinitionModel): ISwaggerDefinition {
+
+    const newDefinition: ISwaggerDefinition = {
+      type: SwaggerDefinitionConstant.Model.Type.OBJECT,
+      properties: {},
+      required: []
+    };
+
+    if (model.description) {
+      newDefinition.description = model.description;
+    }
+
+    for (const propertyIndex in model.properties) {
+
+      this.buildProperty(propertyIndex, model, newDefinition);
+    }
+
+    return newDefinition;
+  }
+
+  private buildProperty(
+    propertyIndex: string, 
+    model: ISwaggerBuildDefinitionModel,
+    newDefinition: ISwaggerDefinition) {
+
+      const property: ISwaggerBuildDefinitionModelProperty =
+        model.properties[propertyIndex];
+      const newProperty: ISwaggerDefinitionProperty = {
+        type: property.type
+      };
+      if (property.format) {
+        newProperty.format = property.format;
+      }
+
+      if (property.description) {
+        newProperty.description = property.description;
+      }
+
+      if (property.enum) {
+        newProperty.enum = property.enum;
+      }
+      if (property.example) {
+        newProperty.example = property.example;
+      }
+      if (property.itemType) {
+        newProperty.items = {
+          type: property.itemType
+        } as ISwaggerDefinitionPropertyItems;
+      }
+      if (property.model) {
+        if (
+          _.isEqual(
+            SwaggerDefinitionConstant.Model.Property.Type.ARRAY,
+            property.type
+          )
+        ) {
+          newProperty.items = {
+            $ref: this.buildRef(property.model)
+          } as ISwaggerDefinitionPropertyItems;
+        } else {
+          newProperty.$ref = this.buildRef(property.model);
+        }
+      }
+      if (property.required) {
+        newDefinition.required.push(propertyIndex);
+      }
+      newDefinition.properties[propertyIndex] = newProperty;
   }
 
   public setExternalDocs(externalDocs: ISwaggerExternalDocs): void {
@@ -494,7 +512,8 @@ export class SwaggerService {
         }
       }
       if (response.model) {
-        const ref = this.buildRef(response.model);
+
+        const ref = this.buildRef(response.model, response.options);
         let newSwaggerOperationResponseSchema: ISwaggerOperationSchema = {
           $ref: ref
         };
@@ -640,8 +659,31 @@ export class SwaggerService {
     return operation;
   }
 
-  private buildRef(definition: string): string {
-    return "#/definitions/".concat(_.upperFirst(definition));
+  private buildRef(definition: string, options?: IOptions): string {
+
+    let model: string = definition;
+
+    if (options !== null && options !== undefined) {
+
+      model = this.buildRefWithOptions(definition, options);
+    }
+
+    return "#/definitions/".concat(_.upperFirst(model));
+  }
+
+  private buildRefWithOptions(definition: string, options: IOptions): string {
+
+    if (options.modelSubstitution !== null && options.modelSubstitution !== undefined) {
+
+      SwaggerService.getInstance().generateVirtualModel(
+        definition, 
+        options.modelSubstitution.name, 
+        options.modelSubstitution);
+
+      return options.modelSubstitution.name;
+    }
+
+    return definition;
   }
 
   public addApiModelProperty(
@@ -683,7 +725,7 @@ export class SwaggerService {
     }
     namedBuildDefinitionModel.definition.properties[
       propertyKey.toString()
-      ] = swaggerBuildDefinitionModelProperty;
+    ] = swaggerBuildDefinitionModelProperty;
   }
 
   public addApiModel(args: IApiModelArgs, target: any, superClass: any): any {
@@ -712,5 +754,32 @@ export class SwaggerService {
     }
 
     this.setDefinitions(this.modelsMap);
+  }
+
+  public generateVirtualModel(definition: string, name: string, options: Pick<IModelsubstition, "keys">): void {
+
+    const originalModel = this.modelsMap[definition];
+
+    const newModel = _.cloneDeep(originalModel);
+
+    newModel.name = name;
+
+    Object.keys(options.keys).forEach(key => {
+
+      if (newModel.definition.properties[key] === null || newModel.definition.properties[key] === undefined) {
+
+        // TODO: build new model property
+        
+      } else {
+
+        newModel.definition.properties[key].model = options.keys[key].model;
+      }
+    });
+
+    const definitions: { [key: string]: ISwaggerDefinition } = {};
+
+    definitions[newModel.name] = this.buildDefinition(newModel.definition)
+
+    this.data.definitions = _.mergeWith(this.data.definitions, definitions);
   }
 }

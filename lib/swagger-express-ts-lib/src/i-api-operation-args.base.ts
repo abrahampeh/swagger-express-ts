@@ -26,6 +26,20 @@ export interface IApiOperationArgsBaseResponse {
     description?: string;
     type?: string;
     model?: string;
+    options?: IOptions;
+}
+
+export interface IOptions {
+    modelSubstitution?: IModelsubstition;
+}
+
+export interface IModelsubstition {
+    name: string;
+    keys: {
+        [key: string]: {
+            model: string;
+        }
+    }
 }
 
 export interface IApiOperationArgsBaseParameters {

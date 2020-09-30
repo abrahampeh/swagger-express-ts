@@ -616,7 +616,6 @@ describe("SwaggerService", () => {
       );
 
       SwaggerService.getInstance().buildSwagger();
-      console.log(JSON.stringify(SwaggerService.getInstance().getData().paths));
       expect(SwaggerService.getInstance().getData().paths).to.deep.equal(expectedPaths);
     });
 
