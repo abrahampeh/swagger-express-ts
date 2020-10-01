@@ -773,6 +773,7 @@ export class SwaggerService {
       } else {
 
         newModel.definition.properties[key].model = options.keys[key].model;
+        newModel.definition.properties[key].example === undefined;
       }
     });
 
